@@ -13,7 +13,7 @@ export function SidePanel() {
   // On phones the panel is a bottom sheet: open it when something gets selected.
   const selectedId = ctl.selectedId;
   useEffect(() => {
-    if (selectedId !== null && window.innerWidth <= 760) ui.set({ panelOpen: true });
+    if (selectedId !== null && window.innerWidth <= 760 && ui.get().screen === 'lab') ui.set({ panelOpen: true });
   }, [selectedId]);
   return (
     <>

@@ -231,6 +231,56 @@ describe('World', () => {
   });
 });
 
+describe('Adventure', () => {
+  function playerWorld() {
+    const w = new World({ seed: 'adventure', startBrain: 'forager', ...quiet });
+    const g = randomGenome(new Rng(11));
+    seedForagerBrain(g.brain, new Rng(12));
+    const c = w.spawnPlayer(g, 'Hero', 'Ludus', 'ludens');
+    return { w, g, c };
+  }
+
+  it('spawns the player as the founder of a named species', () => {
+    const { w, c } = playerWorld();
+    expect(w.player?.id).toBe(c.id);
+    const sp = w.species.get(c.speciesId)!;
+    expect([sp.genus, sp.epithet]).toEqual(['Ludus', 'ludens']);
+    expect(c.name).toBe('Hero');
+  });
+
+  it('lets the player override the brain and never breeds on its own', () => {
+    const { w, c } = playerWorld();
+    c.growth = 1;
+    w.player!.thrust = 1;
+    w.player!.turn = 0;
+    const a0 = c.angle;
+    run(w, 30);
+    expect(c.angle).toBeCloseTo(a0, 5);
+    expect(c.speed).toBeGreaterThan(5);
+    c.energy = c.maxEnergy;
+    run(w, 60);
+    expect(c.children).toBe(0);
+  });
+
+  it('breeds on command: the heir gets the designed body and joins the bloodline', () => {
+    const { w, g, c } = playerWorld();
+    expect(w.playerBreed(g).ok).toBe(false); // still a juvenile
+    c.growth = 1;
+    c.energy = c.maxEnergy;
+    const design = { body: g.body.slice(), brain: g.brain.slice() };
+    design.body[G.size] = 0.2;
+    const res = w.playerBreed(design, 2);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const heir = w.getCreature(w.player!.id)!;
+    expect(heir.id).toBe(res.babies[0].id);
+    expect(Array.from(heir.genome.body)).toEqual(Array.from(design.body));
+    expect(heir.generation).toBe(1);
+    for (const b of res.babies) expect(w.player!.lineage.has(b.id)).toBe(true);
+    expect(w.playerLineageAlive().length).toBe(1 + res.babies.length);
+  });
+});
+
 describe('Benchmark', () => {
   it('scores a hand-wired forager above random brains', () => {
     const rng = new Rng(10);

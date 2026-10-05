@@ -1,5 +1,5 @@
 import { BITE_THRESHOLD, H_MAX, IN, N_IN, N_OUT, OUT, W1_OFFSET, W3_OFFSET } from './brainLayout.ts';
-import { Creature, type DeathCause } from './creature.ts';
+import { Creature, expressTraits, type DeathCause } from './creature.ts';
 import {
   cloneGenome,
   crossover,
@@ -175,6 +175,23 @@ export interface BankEntry {
 
 type DamageSource = 'bite' | 'toxin' | 'starve' | 'age' | null;
 
+/** Adventure mode: the creature steered by the player, and its bloodline. */
+export interface PlayerControl {
+  id: number;
+  /** Swim −1…1, turn −1…1 and bite, set by the keyboard or pointer each frame. */
+  thrust: number;
+  turn: number;
+  bite: boolean;
+  /** Let the creature's own brain drive instead of the player. */
+  autopilot: boolean;
+  /** Every creature descended from the player's creatures (including them). */
+  lineage: Set<number>;
+  /** What the creature's own brain wanted to do this step (swim, turn, bite). */
+  instinct: [number, number, number];
+}
+
+export type BreedResult = { ok: true; babies: Creature[] } | { ok: false; reason: string };
+
 const TAU = Math.PI * 2;
 const CELL = 80;
 
@@ -200,6 +217,8 @@ export class World {
   /** Most recent common ancestor (maternal line) of everyone alive. */
   mrca: { id: number; generation: number; born: number } | null = null;
   lastSkill = NaN;
+  /** Adventure mode: the player's creature (null in the lab). */
+  player: PlayerControl | null = null;
   readonly totals = {
     births: 0,
     deaths: 0,
@@ -361,6 +380,7 @@ export class World {
       energyFraction?: number;
       energy?: number;
       parentGenomes?: [Genome | null, Genome | null];
+      name?: string;
     },
   ): Creature {
     const c = this.makeCreature(genome, x, y, angle, opts);
@@ -382,11 +402,12 @@ export class World {
       energyFraction?: number;
       energy?: number;
       parentGenomes?: [Genome | null, Genome | null];
+      name?: string;
     },
   ): Creature {
     const c = new Creature({
       id: this.nextId++,
-      name: creatureName(this.rng),
+      name: opts.name ?? creatureName(this.rng),
       genome,
       x,
       y,
@@ -511,6 +532,17 @@ export class World {
       c.prevAngle = c.angle;
       this.sense(c);
       c.brain.forward();
+      const pl = this.player;
+      if (pl && c.id === pl.id && !pl.autopilot) {
+        // The player is the brain: their input replaces the motor neurons.
+        const out = c.brain.output;
+        pl.instinct[0] = out[OUT.thrust];
+        pl.instinct[1] = out[OUT.turn];
+        pl.instinct[2] = out[OUT.bite];
+        out[OUT.thrust] = pl.thrust;
+        out[OUT.turn] = pl.turn;
+        out[OUT.bite] = pl.bite ? 1 : -1;
+      }
       this.act(c, dt);
     }
 
@@ -935,6 +967,7 @@ export class World {
 
     if (
       this.config.reproduction &&
+      c.id !== this.player?.id &&
       c.growth >= 1 &&
       c.reproCooldown <= 0 &&
       c.energy >= t.fertility * c.maxEnergy
@@ -1083,6 +1116,117 @@ export class World {
     return best;
   }
 
+  // ---------------------------------------------------------------------------
+  // Adventure mode
+  // ---------------------------------------------------------------------------
+
+  /** Drops the player's hand-designed creature into the dish as the founder of a new species. */
+  spawnPlayer(genome: Genome, name: string, genus: string, epithet: string): Creature {
+    const sp = this.species.create(genome, this.nextId, null, this.time, this.rng, true);
+    sp.genus = genus;
+    sp.epithet = epithet;
+    const p = this.randomPointInDish(0.5);
+    const c = this.addCreature(genome, p.x, p.y, this.rng.range(0, TAU), {
+      species: sp,
+      generation: 0,
+      growth: 0.45,
+      energyFraction: 0.85,
+      name,
+    });
+    this.player = { id: c.id, thrust: 0, turn: 0, bite: false, autopilot: false, lineage: new Set([c.id]), instinct: [0, 0, 0] };
+    this.emit({ type: 'birth', id: c.id, x: c.x, y: c.y, hue: c.traits.hue, sexual: false });
+    return c;
+  }
+
+  /** Ready to breed: grown up and at least 60% full. */
+  playerCanBreed(): { ready: boolean; reason: string } {
+    const c = this.player ? this.byId.get(this.player.id) : undefined;
+    if (!c) return { ready: false, reason: 'No creature' };
+    if (c.growth < 1) return { ready: false, reason: 'Grow up first' };
+    if (c.energy < 0.6 * c.maxEnergy) return { ready: false, reason: 'Eat more (60% energy needed)' };
+    return { ready: true, reason: '' };
+  }
+
+  /** Energy price of one egg with this design, and how many the player can afford now. */
+  playerClutch(design: Genome): { babyEnergy: number; cost: number; affordable: number } | null {
+    const c = this.player ? this.byId.get(this.player.id) : undefined;
+    if (!c) return null;
+    const t = expressTraits(design);
+    const babyR = t.adultRadius * t.babyFraction;
+    const babyEnergy = T.energyPerMass * (babyR / T.massRef) ** 2 * T.babyEnergyFill;
+    const cost = babyEnergy * T.birthOverhead;
+    const affordable = Math.max(0, Math.floor((c.energy - T.minParentReserve * c.maxEnergy) / cost));
+    return { babyEnergy, cost, affordable };
+  }
+
+  /**
+   * The player lays a clutch of eggs. The first baby carries exactly the body
+   * the player designed (directed evolution) and becomes the new player; its
+   * siblings get ordinary mutations (and a mate's genes if one is close) and
+   * live on their own, driven by their instincts.
+   */
+  playerBreed(design: Genome, clutch = 2, name?: string): BreedResult {
+    const pl = this.player;
+    const c = pl ? this.byId.get(pl.id) : undefined;
+    if (!pl || !c) return { ok: false, reason: 'No creature to breed' };
+    const ready = this.playerCanBreed();
+    if (!ready.ready) return { ok: false, reason: ready.reason };
+    const { babyEnergy, cost, affordable } = this.playerClutch(design)!;
+    const dt = expressTraits(design);
+    const babyR = dt.adultRadius * dt.babyFraction;
+    const n = Math.max(0, Math.min(clutch, affordable));
+    if (n < 1) return { ok: false, reason: 'Not enough energy for an egg' };
+    const mate = this.config.sexual ? this.findMate(c) : null;
+    const parentSpecies = this.species.get(c.speciesId)!;
+    const babies: Creature[] = [];
+    for (let i = 0; i < n; i++) {
+      let g: Genome;
+      if (i === 0) {
+        // The body is exactly as designed; the brain still mutates like anyone's.
+        g = cloneGenome(design);
+        g.brain = mutate(design, this.rng, this.config.mutationScale).brain;
+      } else g = mutate(mate ? crossover(design, mate.genome, this.rng) : design, this.rng, this.config.mutationScale);
+      const a = c.angle + Math.PI + (i - (n - 1) / 2) * 0.9;
+      const dist = c.radius + babyR + 2;
+      let x = c.x + Math.cos(a) * dist;
+      let y = c.y + Math.sin(a) * dist;
+      const R = this.config.radius - babyR - 1;
+      const d = Math.hypot(x, y);
+      if (d > R) {
+        x *= R / d;
+        y *= R / d;
+      }
+      const sp = this.species.assign(g, parentSpecies, this.nextId, this.time, this.rng);
+      const baby = this.makeCreature(g, x, y, a, {
+        species: sp,
+        generation: c.generation + 1,
+        parentId: c.id,
+        mateId: i === 0 ? 0 : (mate?.id ?? 0),
+        energy: babyEnergy,
+        growth: 0,
+        parentGenomes: [c.genome, i === 0 ? null : (mate?.genome ?? null)],
+        name: i === 0 ? name : undefined,
+      });
+      babies.push(baby);
+      this.newborns.push(baby);
+      c.energy -= cost;
+      c.children++;
+    }
+    c.reproCooldown = T.reproCooldown;
+    this.processBirths();
+    pl.id = babies[0].id;
+    pl.thrust = pl.turn = 0;
+    pl.bite = false;
+    return { ok: true, babies };
+  }
+
+  /** Living members of the player's bloodline. */
+  playerLineageAlive(): Creature[] {
+    const lineage = this.player?.lineage;
+    if (!lineage) return [];
+    return this.creatures.filter((c) => lineage.has(c.id));
+  }
+
   private tryReproduce(c: Creature): void {
     const cfg = this.config;
     if (this.creatures.length + this.newborns.length >= cfg.maxPopulation) {
@@ -1196,8 +1340,10 @@ export class World {
   }
 
   private processBirths(): void {
+    const lineage = this.player?.lineage;
     for (const b of this.newborns) {
       this.register(b);
+      if (lineage && (lineage.has(b.parentId) || lineage.has(b.mateId))) lineage.add(b.id);
       this.totals.births++;
       this.interval.births++;
       const parentRec = this.records.get(b.parentId);

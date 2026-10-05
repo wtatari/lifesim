@@ -21,6 +21,7 @@ import {
   Sparkles,
   Swords,
   Target,
+  Trophy,
   TriangleAlert,
   X,
   Zap,
@@ -58,7 +59,8 @@ export function Toasts() {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => {
-        const Icon = t.kind === 'discovery' && t.icon ? DISCOVERY_ICONS[t.icon as DiscoveryIcon] ?? Sparkles : t.kind === 'warning' ? TriangleAlert : Info;
+        const Icon =
+          t.kind === 'discovery' && t.icon ? (DISCOVERY_ICONS[t.icon as DiscoveryIcon] ?? Sparkles) : t.kind === 'goal' ? Trophy : t.kind === 'warning' ? TriangleAlert : Info;
         return (
           <div key={t.id} className={`toast glass toast-${t.kind}`} role="status">
             <span className="toast-icon">
@@ -66,6 +68,7 @@ export function Toasts() {
             </span>
             <div className="toast-main">
               {t.kind === 'discovery' && <span className="eyebrow toast-eyebrow">Discovery</span>}
+              {t.kind === 'goal' && <span className="eyebrow toast-eyebrow">Goal complete</span>}
               <strong>{t.title}</strong>
               <p>{t.body}</p>
               {t.guide && (

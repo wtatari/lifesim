@@ -95,6 +95,7 @@ export function WorldCanvas() {
     };
 
     const onDbl = (e: MouseEvent) => {
+      if (ctl.pointerMode === 'steer') return;
       const p = local(e);
       const c = ctl.pickAt(p.x, p.y);
       if (c) {
@@ -131,7 +132,9 @@ export function WorldCanvas() {
 function CanvasElement({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElement | null> }) {
   const ctl = useSim();
   const cursor =
-    ctl.tool === 'inspect'
+    ctl.pointerMode === 'steer'
+      ? 'crosshair'
+      : ctl.tool === 'inspect'
       ? ctl.hoveredId !== null
         ? 'pointer'
         : 'grab'

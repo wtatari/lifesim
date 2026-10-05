@@ -56,6 +56,12 @@ export class SimController {
   fps = 60;
   version = 0;
   pointerWorld: { x: number; y: number } | null = null;
+  /** 'steer': pressing the dish steers the player's creature (adventure mode). */
+  pointerMode: 'tools' | 'steer' = 'tools';
+  /** True while the pointer is held down in steer mode. */
+  steering = false;
+  /** Last pointer position on screen (CSS pixels), for steering while the camera moves. */
+  pointerScreen: { x: number; y: number } | null = null;
   /** Extra hooks run on every batch of world events (discoveries, lessons…). */
   readonly eventHooks = new Set<EventHook>();
   /** Hooks run every frame (lesson objectives, etc.). */
@@ -238,7 +244,7 @@ export class SimController {
         showVision: this.showVision,
         trail: sel ? this.trail : null,
         pointer: this.pointerWorld,
-        toolRadius: toolInfo.radius,
+        toolRadius: this.pointerMode === 'steer' ? 0 : toolInfo.radius,
         toolColor: toolInfo.color,
         alpha: this.paused ? 1 : Math.min(1, this.acc / T.dt),
       };
@@ -420,6 +426,7 @@ export class SimController {
     const r = this.renderer;
     if (!r) return;
     this.pointerWorld = r.screenToWorld(sx, sy);
+    this.pointerScreen = { x: sx, y: sy };
     const c = this.pickAt(sx, sy);
     const id = c ? c.id : null;
     if (id !== this.hoveredId) {
@@ -429,6 +436,7 @@ export class SimController {
   }
 
   leave(): void {
+    if (this.steering) return;
     this.pointerWorld = null;
     this.spraying = false;
     if (this.hoveredId !== null) {
@@ -443,8 +451,13 @@ export class SimController {
     if (!r) return false;
     const p = r.screenToWorld(sx, sy);
     this.pointerWorld = p;
+    this.pointerScreen = { x: sx, y: sy };
     const w = this.world;
     const fx = r.effects;
+    if (this.pointerMode === 'steer') {
+      this.steering = true;
+      return true;
+    }
     switch (this.tool) {
       case 'inspect': {
         const c = this.pickAt(sx, sy);
@@ -502,6 +515,7 @@ export class SimController {
 
   release(): void {
     this.spraying = false;
+    this.steering = false;
   }
 
   private spray(dt: number): void {

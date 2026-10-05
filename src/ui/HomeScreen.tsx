@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Check, GraduationCap, History, Microscope, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Egg, Gamepad2, GraduationCap, History, Microscope, Sparkles } from 'lucide-react';
 import { ui } from '../app/ui.ts';
 import { useStore } from '../app/store.ts';
 import { loadSaveMeta, type SaveMeta } from '../app/persist.ts';
@@ -12,10 +12,12 @@ export function HomeScreen({
   onLesson,
   onScenario,
   onContinue,
+  onAdventure,
 }: {
   onLesson: (id: string) => void;
   onScenario: (id: string) => void;
   onContinue: () => void;
+  onAdventure: () => void;
 }) {
   const completed = useStore(ui, (s) => s.completedLessons);
   const discovered = useStore(ui, (s) => s.discovered.length);
@@ -50,6 +52,9 @@ export function HomeScreen({
               <GraduationCap size={18} />
               {completed.length === 0 ? 'Start the Academy' : `Continue the Academy: ${nextLesson.title}`}
             </button>
+            <button className="btn big adventure-cta" onClick={onAdventure}>
+              <Gamepad2 size={18} /> Create your creature
+            </button>
             <button className="btn big" onClick={() => onScenario('ecosystem')}>
               <Microscope size={18} /> Open the sandbox
             </button>
@@ -68,6 +73,22 @@ export function HomeScreen({
             </span>
           </div>
         </div>
+
+        <section className="home-section" aria-labelledby="adventure-h">
+          <button className="adventure-card" onClick={onAdventure}>
+            <span className="adventure-card-icon" aria-hidden="true">
+              <Egg size={26} />
+            </span>
+            <span className="adventure-card-text">
+              <span className="eyebrow">Adventure mode</span>
+              <strong id="adventure-h">Design a creature. Play as it. Evolve your bloodline.</strong>
+              <span>
+                Build a body from DNA, then swim, eat, fight and lay eggs. Each generation you spend evolution points to redesign your baby, while its wild brothers and sisters mutate on their own. Can your design out-compete natural selection?
+              </span>
+            </span>
+            <ArrowRight size={18} className="lesson-arrow" />
+          </button>
+        </section>
 
         <section className="home-section" aria-labelledby="academy-h">
           <div className="home-section-head">

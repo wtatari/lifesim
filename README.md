@@ -7,6 +7,7 @@
 ## What you can do
 
 - **Watch evolution happen live.** Creatures that find food have more babies, and their DNA spreads. Start from random brains in *Primordial soup* and watch a measured foraging-skill score climb from about 2 to 25+ plants per minute.
+- **Play as a creature (Adventure mode).** Design a body from DNA: size, muscle, diet, eyes, brain and more. Every slider shows its trade-offs (speed, energy burn, lifespan). Then swim, eat and fight with the keyboard, mouse or touch. When you are a well-fed adult, lay eggs. You spend the evolution points you earned to redesign the baby you will play next. Its brothers and sisters get random mutations instead and breed on their own, so your designs compete with natural selection. If you die, carry on as any living member of your bloodline. Goals guide you from your first meal to a ten-generation dynasty. All the while, a readout shows what your creature's own neural network *wants* to do. Switch on autopilot to let it drive.
 - **Look inside a brain.** Click any creature to see its 14 senses, up to 12 hidden neurons and 3 actions firing in real time. Hover anything for an explanation. LifeSim probes the network and describes its instincts in plain words ("Steers toward plants", "Bites strangers but spares its family").
 - **Perform brain surgery.** Change, flip or cut any connection, or switch neurons off, then watch the behaviour change. Optionally write the change into its DNA so its babies inherit it.
 - **Read its DNA.** A heat map of all 275 genes shows which came from the mother, which from the father, and which are fresh mutations. Copy any creature's DNA code and release it into another world.
@@ -69,9 +70,9 @@ src/
     instincts.ts   plain-language behaviour analysis by probing the network
     tuning.ts      every "law of nature" in one place
   render/     Canvas 2D microscope renderer (sprites, effects, camera, minimap)
-  app/        Controller (animation loop, tools), UI store, discoveries, saving
+  app/        Controller (animation loop, tools), UI store, discoveries, saving, adventure mode
   ui/         React interface (inspector, brain view, charts, lessons, modals)
-  content/    Field Guide, lessons, scenarios and discoveries, as plain data
+  content/    Field Guide, lessons, scenarios, discoveries and adventure goals, as plain data
 scripts/      Headless evolution runner
 tests/        Vitest unit tests for the engine
 ```

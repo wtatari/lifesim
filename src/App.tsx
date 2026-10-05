@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SimContext } from './app/context.ts';
 import { SimController, SPEEDS, TOOLS, type ToolId } from './app/controller.ts';
 import { attachDiscoveries } from './app/discoveryEngine.ts';
+import { attachAdventure, resetAdventure } from './app/adventure.ts';
 import { loadWorld, saveWorld } from './app/persist.ts';
 import { clearToasts, pushToast, ui } from './app/ui.ts';
 import { useStore } from './app/store.ts';
@@ -21,6 +22,7 @@ import { LabControls } from './ui/modals/LabControls.tsx';
 import { DiscoveriesDialog, ImportDnaDialog, NewWorldDialog, ShortcutsDialog } from './ui/modals/Dialogs.tsx';
 import { LessonCoach } from './ui/lesson/LessonCoach.tsx';
 import { NeuronLab } from './ui/lesson/NeuronLab.tsx';
+import { AdventureHUD } from './ui/adventure/AdventureHUD.tsx';
 
 function ambientWorld() {
   return createWorld(getScenario('ecosystem'), { seed: 'home-dish', startPopulation: 70 });
@@ -45,7 +47,7 @@ export function App() {
     const measure = () => {
       const r = ctl.renderer;
       if (!r) return;
-      if (ui.get().screen !== 'lab') {
+      if (ui.get().screen === 'home') {
         r.setInsets({ left: 0, right: 0, top: 0, bottom: 0 });
         return;
       }
@@ -107,8 +109,14 @@ export function App() {
 
   // ------------------------------------------------------------ discoveries
   useEffect(() => {
-    if (screen !== 'lab') return;
+    if (screen === 'home') return;
     return attachDiscoveries(ctl);
+  }, [screen, ctl]);
+
+  // ------------------------------------------------------------ adventure
+  useEffect(() => {
+    if (screen !== 'adventure') return;
+    return attachAdventure(ctl);
   }, [screen, ctl]);
 
   // A slow drifting camera on the start screen.
@@ -168,9 +176,31 @@ export function App() {
     [startWorld],
   );
 
+  const startAdventure = useCallback(() => {
+    const w = createWorld(getScenario('ecosystem'), { seed: `adventure-${Date.now()}` });
+    clearToasts();
+    ctl.setWorld(w);
+    ctl.setSpeed(1);
+    ctl.setTool('inspect');
+    resetAdventure('create');
+    ui.set({
+      screen: 'adventure',
+      scenarioId: 'ecosystem',
+      worldName: 'Adventure',
+      modal: null,
+      log: [],
+      lessonId: null,
+      lessonStep: 0,
+      surgery: false,
+      panelOpen: false,
+      inspectorTab: 'brain',
+    });
+  }, [ctl]);
+
   const goHome = useCallback(() => {
     void saveNow(true);
     clearToasts();
+    resetAdventure('off');
     ui.set({ screen: 'home', lessonId: null, modal: null });
     ctl.setWorld(ambientWorld());
     ctl.setSpeed(1);
@@ -248,7 +278,12 @@ export function App() {
       <div className={`app screen-${screen} ${panelOpen ? 'panel-open' : 'panel-closed'} ${dockOpen ? 'dock-open' : 'dock-closed'}`}>
         <WorldCanvas />
         {screen === 'home' ? (
-          <HomeScreen onLesson={startLesson} onScenario={(id) => startWorld(id)} onContinue={continueSaved} />
+          <HomeScreen onLesson={startLesson} onScenario={(id) => startWorld(id)} onContinue={continueSaved} onAdventure={startAdventure} />
+        ) : screen === 'adventure' ? (
+          <>
+            <AdventureHUD onHome={goHome} onRestart={startAdventure} />
+            <SidePanel />
+          </>
         ) : (
           <>
             <TopBar onHome={goHome} onNewWorld={() => ui.set({ modal: 'newWorld' })} onSave={() => void saveNow(false)} onLoad={continueSaved} />

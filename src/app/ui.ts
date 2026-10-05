@@ -6,7 +6,7 @@ export type InspectorTab = 'brain' | 'body' | 'dna' | 'family';
 
 export interface Toast {
   id: number;
-  kind: 'discovery' | 'info' | 'warning' | 'lesson';
+  kind: 'discovery' | 'info' | 'warning' | 'lesson' | 'goal';
   title: string;
   body: string;
   /** Field Guide entry to open from the toast. */
@@ -24,7 +24,7 @@ export interface LogEntry {
 }
 
 export interface UiState {
-  screen: 'home' | 'lab';
+  screen: 'home' | 'lab' | 'adventure';
   scenarioId: string;
   worldName: string;
   modal: Modal;
