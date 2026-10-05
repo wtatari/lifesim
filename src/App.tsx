@@ -30,7 +30,9 @@ export function App() {
   const [ctl] = useState(() => new SimController(ambientWorld()));
   // Handy for debugging and automated tests: window.__lifesim is the controller.
   useEffect(() => {
-    (window as unknown as { __lifesim?: SimController }).__lifesim = ctl;
+    const w = window as unknown as { __lifesim?: SimController; __lifesimUi?: typeof ui };
+    w.__lifesim = ctl;
+    w.__lifesimUi = ui;
   }, [ctl]);
   const screen = useStore(ui, (s) => s.screen);
   const modal = useStore(ui, (s) => s.modal);

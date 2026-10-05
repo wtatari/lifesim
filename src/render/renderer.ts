@@ -702,9 +702,9 @@ dim: boolean,
   ctx.arc(-r * 0.22, r * 0.05, r * 0.24, 0, TAU);
   ctx.fill();
 
-  // Starving creatures fade.
-  if (energy < 0.3) {
-    ctx.fillStyle = `rgba(3, 6, 11, ${(0.3 - energy) * 1.6})`;
+  // Starving creatures fade (only visible up close; tiny dark cells read as rings).
+  if (energy < 0.3 && sr >= 6) {
+    ctx.fillStyle = `rgba(3, 6, 11, ${(0.3 - energy) * 1.1})`;
     ctx.beginPath();
     ctx.arc(0, 0, r * 0.95, 0, TAU);
     ctx.fill();

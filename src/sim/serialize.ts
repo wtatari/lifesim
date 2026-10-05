@@ -32,6 +32,8 @@ export interface SavedWorld {
   records: LifeRecord[];
   stats: { samples: StatSample[]; interval: number; lastSampleAt: number };
   geneBank: { genome: string; speciesId: number; generation: number; score: number; hunter: boolean }[];
+  timers?: World['timers'];
+  plantAcc?: number;
 }
 
 interface SavedCreature {
@@ -57,9 +59,9 @@ const round = (v: number, d = 100) => Math.round(v * d) / d;
 
 export function serializeWorld(w: World, meta: { name: string; scenarioId: string }): SavedWorld {
   const plants: number[] = [];
-  for (const p of w.plants) plants.push(round(p.x), round(p.y), round(p.energy), p.maxEnergy, p.kind, round(p.age), round(p.maxAge));
+  for (const p of w.plants) plants.push(p.x, p.y, p.energy, p.maxEnergy, p.kind, p.age, p.maxAge);
   const meats: number[] = [];
-  for (const m of w.meats) meats.push(round(m.x), round(m.y), round(m.energy), round(m.hue, 1000));
+  for (const m of w.meats) meats.push(m.x, m.y, m.energy, m.hue);
   return {
     version: 1,
     savedAt: Date.now(),
@@ -94,9 +96,9 @@ export function serializeWorld(w: World, meta: { name: string; scenarioId: strin
         mateId: c.mateId,
         speciesId: c.speciesId,
         birthTime: c.birthTime,
-        s: [c.x, c.y, c.angle, c.vx, c.vy, c.energy, c.health, c.age, c.growth, c.pain, c.reproCooldown].map((v) => round(v, 1000)),
-        stats: [c.plantsEaten, c.berriesEaten, c.toxicEaten, round(c.meatEaten), round(c.energyGained), c.kills, c.children, round(c.distance)],
-        liking: Array.from(c.brain.liking, (v) => round(v, 1000)),
+        s: [c.x, c.y, c.angle, c.vx, c.vy, c.energy, c.health, c.age, c.growth, c.pain, c.reproCooldown],
+        stats: [c.plantsEaten, c.berriesEaten, c.toxicEaten, c.meatEaten, c.energyGained, c.kills, c.children, round(c.distance)],
+        liking: Array.from(c.brain.liking),
         lesioned: Array.from(c.brain.lesioned),
         learningEvents: c.brain.learningEvents,
         favored: c.favored,
@@ -105,6 +107,8 @@ export function serializeWorld(w: World, meta: { name: string; scenarioId: strin
     records: [...w.records.values()],
     stats: { samples: w.stats.samples, interval: w.stats.interval, lastSampleAt: w.stats.lastSampleAt },
     geneBank: w.geneBank.map((b) => ({ genome: encodeGenome(b.genome), speciesId: b.speciesId, generation: b.generation, score: b.score, hunter: b.hunter })),
+    timers: { ...w.timers },
+    plantAcc: w.plantAcc,
   };
 }
 
@@ -173,5 +177,7 @@ export function deserializeWorld(d: SavedWorld): World {
   w.stats.interval = d.stats.interval;
   w.stats.lastSampleAt = d.stats.lastSampleAt;
   w.geneBank = d.geneBank.map((b) => ({ genome: decodeGenome(b.genome), speciesId: b.speciesId, generation: b.generation, score: b.score, hunter: b.hunter }));
+  if (d.timers) w.timers = { ...d.timers };
+  if (d.plantAcc !== undefined) w.plantAcc = d.plantAcc;
   return w;
 }

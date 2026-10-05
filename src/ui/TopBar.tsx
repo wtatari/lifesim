@@ -85,10 +85,10 @@ export function TopBar({ onHome, onNewWorld, onSave, onLoad }: { onHome: () => v
 
       <div className="topbar-right">
         <div className="vitals" data-tour="vitals">
-          <Vital label="Time" value={formatTime(w.time)} title="Time since the experiment started (simulated)" />
           <Vital label="Pop" value={String(w.creatures.length)} title="Creatures alive" />
-          <Vital label="Species" value={String(living)} title="Species alive" />
           <Vital label="Gen" value={String(w.totals.maxGeneration)} title="Highest generation reached" />
+          <Vital label="Species" value={String(living)} title="Species alive" />
+          <Vital label="Time" value={formatTime(w.time)} title="Time since the experiment started (simulated)" />
           <span className={`season season-${season.name}`} title={`Season: ${season.name}. Plants grow ${Math.round(season.factor * 100)}% as fast as average.`}>
             <SeasonIcon size={15} />
             <span className="season-name">{season.name}</span>

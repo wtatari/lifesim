@@ -222,13 +222,15 @@ export class World {
   private readonly tmpMeat: Meat[] = [];
   private readonly tmpCreatures: Creature[] = [];
   private newborns: Creature[] = [];
-  private plantAcc = 0;
+  /** Fractional plant spawns carried between steps. */
+  plantAcc = 0;
   private anyDeaths = false;
   private deadPlants = false;
   private lastSeason: SeasonName;
   private damageSource = new Map<number, DamageSource>();
   private interval = { births: 0, deaths: 0, kills: 0, intake: 0, berries: 0, toxic: 0, start: 0 };
-  private timers = { recenter: 0, prune: 0, bankDecay: 0 };
+  /** Countdown timers for periodic bookkeeping (saved with the world). */
+  timers = { recenter: 0, prune: 0, bankDecay: 0 };
   private probe: SkillProbe | null = null;
   private skillResults: number[] = [];
 

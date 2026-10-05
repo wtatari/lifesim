@@ -3,7 +3,8 @@
    ========================================================================= */
 .app {
   position: fixed;
-  inset: 0;
+  /* Stay clear of phone notches and home indicators. */
+  inset: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   overflow: hidden;
   --gap: 12px;
   --top-h: 56px;
