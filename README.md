@@ -82,6 +82,10 @@ tests/        Vitest unit tests for the engine
 - **Saving.** Worlds are saved in this browser's IndexedDB (gzip-compressed) every minute and when you leave.
 - **React** renders the panels a few times per second. The dish and the brain view draw on canvases every frame.
 
+## License
+
+LifeSim is released under the [MIT License](LICENSE).
+
 ## Credits
 
 Typefaces, all under the SIL Open Font License, bundled with [Fontsource](https://fontsource.org): Bricolage Grotesque, Atkinson Hyperlegible Next, Instrument Serif and JetBrains Mono. Icons by [Lucide](https://lucide.dev).

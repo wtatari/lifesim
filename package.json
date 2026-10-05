@@ -1,6 +1,7 @@
 {
   "name": "lifesim",
   "private": true,
+  "license": "MIT",
   "version": "1.0.0",
   "description": "An evolution lab in your browser: creatures with neural-network brains and DNA learn, grow, reproduce and evolve by natural selection.",
   "type": "module",
