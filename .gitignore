@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-single
+*.log
+.DS_Store
+.vite
+coverage
+test-results
+playwright-report
