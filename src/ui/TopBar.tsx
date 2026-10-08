@@ -17,6 +17,7 @@ import { ui } from '../app/ui.ts';
 import { useStore } from '../app/store.ts';
 import { DISCOVERIES } from '../content/discoveries.ts';
 import { formatTime, Logo, SEASON_ICON } from './common.tsx';
+import { MusicToggle } from './MusicToggle.tsx';
 
 export function TopBar({ onHome, onNewWorld, onSave, onLoad }: { onHome: () => void; onNewWorld: () => void; onSave: () => void; onLoad: () => void }) {
   const ctl = useSim();
@@ -116,6 +117,7 @@ export function TopBar({ onHome, onNewWorld, onSave, onLoad }: { onHome: () => v
               {discovered}/{DISCOVERIES.length}
             </span>
           </button>
+          <MusicToggle />
           <MoreMenu onHome={onHome} onNewWorld={onNewWorld} onSave={onSave} onLoad={onLoad} />
         </div>
       </div>

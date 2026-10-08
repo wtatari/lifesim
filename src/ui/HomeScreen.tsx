@@ -7,6 +7,7 @@ import { LESSONS } from '../content/lessons.ts';
 import { SCENARIOS } from '../content/scenarios.ts';
 import { DISCOVERIES } from '../content/discoveries.ts';
 import { formatTime, Logo } from './common.tsx';
+import { MusicToggle } from './MusicToggle.tsx';
 
 export function HomeScreen({
   onLesson,
@@ -38,6 +39,7 @@ export function HomeScreen({
             <span className="live-chip mono">
               <span className="live-dot" /> live specimen
             </span>
+            <MusicToggle />
           </div>
           <h1 className="home-title">
             Evolve minds

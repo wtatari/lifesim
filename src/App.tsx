@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { SimContext } from './app/context.ts';
 import { SimController, SPEEDS, TOOLS, type ToolId } from './app/controller.ts';
 import { attachDiscoveries } from './app/discoveryEngine.ts';
-import { attachAdventure, resetAdventure } from './app/adventure.ts';
+import { adv, attachAdventure, resetAdventure } from './app/adventure.ts';
+import { armMusic, setScene } from './audio/music.ts';
+import { sceneFor } from './audio/score.ts';
 import { loadWorld, saveWorld } from './app/persist.ts';
 import { clearToasts, pushToast, ui } from './app/ui.ts';
 import { useStore } from './app/store.ts';
@@ -118,6 +120,30 @@ export function App() {
     if (screen !== 'adventure') return;
     return attachAdventure(ctl);
   }, [screen, ctl]);
+
+  // ---------------------------------------------------------------- music
+  useEffect(() => {
+    const disarm = armMusic();
+    const follow = () => {
+      const a = adv.get();
+      setScene(
+        sceneFor({
+          screen: ui.get().screen,
+          advPhase: a.phase,
+          editing: a.editor !== null,
+          season: ctl.world.season().name,
+          population: ctl.world.creatures.length,
+          paused: ctl.paused,
+        }),
+      );
+    };
+    follow();
+    const id = window.setInterval(follow, 400);
+    return () => {
+      disarm();
+      window.clearInterval(id);
+    };
+  }, [ctl]);
 
   // A slow drifting camera on the start screen.
   useEffect(() => {

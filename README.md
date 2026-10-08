@@ -14,6 +14,7 @@
 - **Trace family trees.** Follow the maternal line back to the founders, count living descendants, and find the common ancestor of every creature alive.
 - **See learning beat instinct.** In *Poison berries*, two species start with the same instincts. One can learn from a bad meal; the other can't. In every test world, the species that can't learn died out.
 - **Play god (or farmer).** Grow food, feed or breed your favourites (artificial selection), remove creatures, strike a meteor (mass extinction), and change seasons, mutation strength, predation and more from the Lab controls.
+- **Listen.** Calm generative music follows the scene: it brightens in summer, darkens in winter, turns curious in the creature editor, picks up a soft pulse while you steer, and goes quiet and muffled when you pause. It is synthesised live in the browser, so there are no audio files. Mute it with the speaker button.
 - **Learn the ideas.** Six guided Academy lessons, a Neuron Lab where you steer a creature with a single neuron, a 33-entry Field Guide, and 24 discoveries that unlock when your world demonstrates an idea.
 
 ## Run it
@@ -70,6 +71,7 @@ src/
     instincts.ts   plain-language behaviour analysis by probing the network
     tuning.ts      every "law of nature" in one place
   render/     Canvas 2D microscope renderer (sprites, effects, camera, minimap)
+  audio/      Generative music: score.ts (moods, scales, chords), music.ts (Web Audio synth)
   app/        Controller (animation loop, tools), UI store, discoveries, saving, adventure mode
   ui/         React interface (inspector, brain view, charts, lessons, modals)
   content/    Field Guide, lessons, scenarios, discoveries and adventure goals, as plain data

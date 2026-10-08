@@ -10,6 +10,7 @@ import type { Creature } from '../../sim/creature.ts';
 import { formatAge, formatTime, Meter, SpeciesName } from '../common.tsx';
 import { Portrait } from '../inspector/Portrait.tsx';
 import { Modal } from '../modals/Modal.tsx';
+import { MusicToggle } from '../MusicToggle.tsx';
 import { CreatureEditor } from './CreatureEditor.tsx';
 
 const CAUSE_TEXT: Record<string, string> = {
@@ -132,6 +133,7 @@ function TopActions({ onHome }: { onHome: () => void }) {
       <button className="icon-btn" onClick={() => ui.set({ modal: 'guide', guideEntry: null })} title="Field guide (G)" aria-label="Field guide">
         <BookOpen size={18} />
       </button>
+      <MusicToggle size={18} />
       <button className="icon-btn" onClick={onHome} title="Back to the start screen" aria-label="Exit adventure">
         <Home size={18} />
       </button>
